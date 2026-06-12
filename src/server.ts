@@ -2,7 +2,7 @@ import express from "express";
 
 // Create an instance of the express application
 const app = express();
-const port = 3000;
+const port = process.env.PORT;
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
