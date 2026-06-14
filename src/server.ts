@@ -1,6 +1,6 @@
 import express from "express";
 import authRoutes from "./routes/authRoutes.js";
-import { authenticateToken } from "./middlewares/authMiddleware.js";
+import arenaRoutes from "./routes/arenaRoutes.js";
 
 // Validate required environment variables
 if (!process.env.JWT_SECRET) {
@@ -18,6 +18,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/auth", authRoutes);
+app.use("/arenas", arenaRoutes);
 
 // Start and listen on the port
 app.listen(port, () => {
