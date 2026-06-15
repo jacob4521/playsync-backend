@@ -190,23 +190,14 @@ export const createCourt = async (req: AuthenticateRequest, res: Response) => {
 
 export const getCourts = async (req: Request, res: Response) => {
   try {
-    const { id: arenaId } = req.params;
-
-    // validate arenaId is a string
-    if (typeof arenaId !== "string") {
-      return res.status(400).json({ error: "Invalid arena ID" });
-    }
+    const arenaId = req.params.id as string;
 
     // Get the courts for the arenaId from the database
     const courts = await prisma.court.findMany({
       where: {
-        arenaId: arenaId,
+        arenaId,
       },
     });
-
-    if (!courts) {
-      return res.status(404).json({ error: "No courts found for this arena" });
-    }
 
     return res.status(200).json({ courts });
   } catch (error) {

@@ -40,6 +40,7 @@ export const authenticateToken = (
   next();
 };
 
+// Middleware to authorize only users with the "OWNER" role to perform certain actions
 export const authorizeOwner = (
   req: AuthenticateRequest,
   res: Response,
