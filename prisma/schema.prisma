@@ -38,7 +38,7 @@ enum PaymentStatus {
 }
 
 model User {
-  id       String @id @default(cuid())
+  id       String @id @default(cuid(2))
   name     String
   email    String @unique
   password String
@@ -55,7 +55,7 @@ model User {
 }
 
 model Arena {
-  id   String @id @default(cuid())
+  id   String @id @default(cuid(2))
   name String
 
   description String?
@@ -75,7 +75,7 @@ model Arena {
 }
 
 model Court {
-  id           String    @id @default(cuid())
+  id           String    @id @default(cuid(2))
   name         String
   sportType    SportType
   pricePerHour Float
@@ -90,7 +90,7 @@ model Court {
 }
 
 model Booking {
-  id          String        @id @default(cuid())
+  id          String        @id @default(cuid(2))
   date        DateTime
   startTime   DateTime
   endTime     DateTime
@@ -110,7 +110,7 @@ model Booking {
 }
 
 model Payment {
-  id            String        @id @default(cuid())
+  id            String        @id @default(cuid(2))
   amount        Float
   status        PaymentStatus @default(PENDING)
   transactionId String?       @unique

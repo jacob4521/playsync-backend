@@ -31,7 +31,6 @@ export const authenticateToken = (
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!);
     req.user = decoded;
-    console.log(req.user);
   } catch (error) {
     return res.status(403).json({ error: "Access denied, invalid token." });
   }
