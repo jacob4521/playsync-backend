@@ -116,3 +116,101 @@ export const getArenas = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const createCourt = async (req: AuthenticateRequest, res: Response) => {
+  try {
+    // Get the userId from the req.user object
+    if (!req.user || typeof req.user === "string") {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { userId } = req.user;
+
+    // Get the arenaId from the req.params
+    const { id: arenaId } = req.params;
+
+    if (typeof arenaId !== "string") {
+      return res.status(400).json({ error: "Invalid arena ID" });
+    }
+
+    // Get the details from the request body and validate them with zod
+    const createCourtSchema = zod.object({
+      name: zod.string().min(1, "Court name is required"),
+      pricePerHour: zod.number().min(1, "Price per hour is required"),
+      sportType: zod.enum(["FUTSAL", "BADMINTON", "BASKETBALL", "CRICKET"]),
+    });
+
+    const validationResult = createCourtSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(422).json(zod.treeifyError(validationResult.error));
+    }
+
+    // Check if the arena exists and if the user is the owner of the arena
+    const arena = await prisma.arena.findUnique({
+      where: {
+        id: arenaId,
+      },
+    });
+
+    if (!arena) {
+      return res.status(404).json({ error: "Arena not found" });
+    }
+
+    if (arena.ownerId !== userId) {
+      return res
+        .status(403)
+        .json({ error: "Forbidden: You do not own this arena" });
+    }
+
+    // Create the court and return the response
+    const newCourt = await prisma.court.create({
+      data: {
+        name: validationResult.data.name,
+        pricePerHour: validationResult.data.pricePerHour,
+        sportType: validationResult.data.sportType,
+        arenaId: arenaId,
+      },
+    });
+
+    // Return the success response
+    return res.status(201).json({
+      message: "Court created successfully",
+      court: {
+        name: newCourt.name,
+        pricePerHour: newCourt.pricePerHour,
+        sportType: newCourt.sportType,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating court:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getCourts = async (req: Request, res: Response) => {
+  try {
+    const { id: arenaId } = req.params;
+
+    // validate arenaId is a string
+    if (typeof arenaId !== "string") {
+      return res.status(400).json({ error: "Invalid arena ID" });
+    }
+
+    // Get the courts for the arenaId from the database
+    const courts = await prisma.court.findMany({
+      where: {
+        arenaId: arenaId,
+      },
+    });
+
+    if (!courts) {
+      return res.status(404).json({ error: "No courts found for this arena" });
+    }
+
+    return res.status(200).json({ courts });
+  } catch (error) {
+    console.error("Error fetching courts:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};

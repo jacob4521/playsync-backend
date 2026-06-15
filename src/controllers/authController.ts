@@ -7,9 +7,6 @@ import type { AuthenticateRequest } from "../middlewares/authMiddleware.js";
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
-    // Extract user details from the request body
-    const { name, email, password, role } = req.body;
-
     // Validate user input with zod
     const registerUserSchema = zod.object({
       name: zod.string().min(1, "Name is required"),

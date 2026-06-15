@@ -1,6 +1,7 @@
 // Middleware for authenticating requests using JWT tokens
 import { type Request, type Response, type NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { log } from "node:console";
 
 export interface AuthenticateRequest extends Request {
   user?: string | jwt.JwtPayload;
@@ -30,10 +31,28 @@ export const authenticateToken = (
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!);
     req.user = decoded;
+    console.log(req.user);
   } catch (error) {
     return res.status(403).json({ error: "Access denied, invalid token." });
   }
 
   //   If the token is valid, call next()
+  next();
+};
+
+export const authorizeOwner = (
+  req: AuthenticateRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  // Check if the user is authenticated and has the "OWNER" role
+  const user = req.user as { userId: string; role: string } | undefined;
+
+  if (!user || user.role !== "OWNER") {
+    return res
+      .status(403)
+      .json({ error: "Forbidden: Only owners can perform this action." });
+  }
+
   next();
 };
