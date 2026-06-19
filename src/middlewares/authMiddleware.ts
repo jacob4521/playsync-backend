@@ -34,7 +34,7 @@ export const authenticateToken = (
   } catch (error) {
     return res.status(403).json({ error: "Access denied, invalid token." });
   }
-
+                                                        
   //   If the token is valid, call next()
   next();
 };
