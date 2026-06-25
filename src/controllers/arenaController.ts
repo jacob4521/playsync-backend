@@ -68,7 +68,7 @@ export const getArenas = async (req: Request, res: Response) => {
   try {
     // Get the query parameters lat, lon, radius and the pagination parameters page and limit
     const page = req.query.page ? parseInt(req.query.page as string) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
 
     const lat = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
     const lon = req.query.lon ? parseFloat(req.query.lon as string) : undefined;
@@ -78,6 +78,7 @@ export const getArenas = async (req: Request, res: Response) => {
 
     if (!lat || !lon) {
       // Return all the arenas if the latitude, longitude, or radius is not provided with pagination
+      // Also return a list of court available for each arena
       const arenas = await prisma.arena.findMany({
         skip: (page - 1) * limit,
         take: limit,
@@ -89,6 +90,14 @@ export const getArenas = async (req: Request, res: Response) => {
           address: true,
           latitude: true,
           longitude: true,
+          courts: {
+            select: {
+              id: true,
+              name: true,
+              sportType: true,
+              pricePerHour: true,
+            },
+          },
         },
       });
       console.log(arenas);
@@ -100,10 +109,24 @@ export const getArenas = async (req: Request, res: Response) => {
       const offset = (page - 1) * limit;
 
       const arenas = await prisma.$queryRaw`
-        SELECT id, name, description, address, latitude, longitude, 
-          ( 6371 * acos( cos( radians(${lat}) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(${lon}) ) + sin( radians(${lat}) ) * sin( radians( latitude ) ) ) ) AS distance
-        FROM "Arena"
-        WHERE ( 6371 * acos( cos( radians(${lat}) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(${lon}) ) + sin( radians(${lat}) ) * sin( radians( latitude ) ) ) ) <= ${radius}
+        SELECT
+          a.id, a.name, a.description, a.address, a.latitude, a.longitude,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'id', c.id,
+                'name', c.name,
+                'sportType', c."sportType",
+                'pricePerHour', c."pricePerHour"
+              )
+            ) FILTER (WHERE c.id IS NOT NULL),
+            '[]'
+          ) AS courts,
+          ( 6371 * acos( cos( radians(${lat}) ) * cos( radians( a.latitude ) ) * cos( radians( a.longitude ) - radians(${lon}) ) + sin( radians(${lat}) ) * sin( radians( a.latitude ) ) ) ) AS distance
+        FROM "Arena" a
+        LEFT JOIN "Court" c ON c."arenaId" = a.id
+        WHERE ( 6371 * acos( cos( radians(${lat}) ) * cos( radians( a.latitude ) ) * cos( radians( a.longitude ) - radians(${lon}) ) + sin( radians(${lat}) ) * sin( radians( a.latitude ) ) ) ) <= ${radius}
+        GROUP BY a.id, a.name, a.description, a.address, a.latitude, a.longitude
         ORDER BY distance ASC
         LIMIT ${limit}
         OFFSET ${offset}

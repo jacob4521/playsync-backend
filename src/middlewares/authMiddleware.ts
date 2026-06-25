@@ -73,14 +73,12 @@ export const verifyInternalServer = (
         .json({ error: "Forbidden: Invalid internal signature" });
     }
 
-    // Get the userId from the request parameters
+    // Get the userId from the request parameters (optional - only present in /bookings/:userId)
     const userId = req.params.userId;
-    if (!userId) {
-      return res.status(400).json({ error: "Bad Request: Missing userId" });
+    if (userId) {
+      // Add the user id in the req.user object for the next function to use
+      req.user = { userId };
     }
-
-    // Add the user id in the req.user object for the next function to use
-    req.user = { userId };
 
     next();
   } catch (error) {

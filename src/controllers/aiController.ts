@@ -31,13 +31,10 @@ export const askAIAssistantProtected = async (
 ) => {
   try {
     // Get the prompt prompt
-    const userPrompt = req.body.prompt;
-
+    const { prompt: userPrompt, interactionId } = req.body;
     if (!userPrompt || userPrompt.trim() === "") {
       return res.status(400).json({ error: "Invalid or missing prompt." });
     }
-
-    const interactionId = req.body.interactionId;
 
     // Extract user information from the authenticated request
     if (!req.user || typeof req.user === "string") {
